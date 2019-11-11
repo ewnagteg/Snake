@@ -1,0 +1,23 @@
+doctype html
+html
+    head
+        meta(charset='utf-8')
+        title Snake
+        link(rel='stylesheet', type='text/css', href='/static/styles.css')
+    body
+        div#highScoreTable
+            .container
+                p.header
+                    | <b> Welcome to Snake Online! <br> </b>
+                    | Enter your user name to begin.
+                form(action='/add_user', method='POST')
+                    p.user_form
+                        | User name:
+                        input(type='text', name='username', value='')
+                    input(type='submit', value='Submit')
+                if locals.response == 'unused'
+                    form(action='/', value='start game', method='get')
+                        input(type='submit', value='start')
+                else if locals.response == 'used'
+                    .redtext
+                        | user name already taken.

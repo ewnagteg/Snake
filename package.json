@@ -1,11 +1,23 @@
 {
-  "name": "snake",
-  "version": "0.1.0",
-  "description": "snake game",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "author": "ewnagteg",
-  "license": "ISC"
+    "name": "snake",
+    "version": "1.0.0",
+    "description": "snake game",
+    "main": "server.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/ewnagteg/Snake.git"
+    },
+    "author": "ewnagteg",
+    "license": "ISC",
+    "dependencies": {
+        "init-package-json": "^1.10.3",
+        "socket.io": "^6.4.1",
+        "yargs": "^14.2.0",
+        "express": "^4.17.1",
+        "pug": "^6.4.1"
+    },
+    "homepage": "https://github.com/ewnagteg/Snake"
 }

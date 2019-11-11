@@ -1,0 +1,13 @@
+doctype html
+head
+    head
+        meta(charset='utf-8')
+        title Snake
+        link(rel='stylesheet' href='/static/styles.css')
+        script(src='/socket.io/socket.io.js')
+    body
+        canvas#canvas
+        div#highScoreTable
+        script.
+            var username = "#{username}";
+        script(src='/static/game.js')

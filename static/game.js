@@ -4,13 +4,13 @@ var movement = {
     up: false,
     down: false,
     left: false,
-    right: false,
-    dead : false
+    right: false
 };
 
 var players = {};
 var food = [];
-var highScore = 40;
+var isAlive = true;
+var usernames = {};
 
 document.addEventListener('keydown', function(event) {
     switch (event.keyCode) {
@@ -46,27 +46,58 @@ document.addEventListener('keyup', function(event) {
     }
 });
 
-socket.emit('new player');
+socket.emit('new player', username);
 
 var canvas = document.getElementById('canvas');
 canvas.width = 800;
 canvas.height = 600;
 var context = canvas.getContext('2d');
 
-socket.on('state', function(data) {
+socket.on('state', function (data) {
     players = data;
 });
 
-socket.on('food', function(data) {
+socket.on('food', function (data) {
     food = data;
 });
 
-socket.on('highscore', function(data) {
-    highScore = data;
+socket.on('usernames', function (data) {
+    usernames = data;
 });
 
+function updatePlayer(id, uname, score) {
+    var table = document.getElementById('highScoreTable');
+    var child = table.querySelector("#"+id);
+    if (child != null) {
+        var scoreChild = child.querySelector('.score');
+        if (scoreChild.textContent != score) {
+            scoreChild.textContent = score;
+        }
+        var nameChild = child.querySelector('.name');
+        if (nameChild.textContent != uname) {
+            nameChild.textContent = uname;
+        }
+
+    } else {
+        var row = document.createElement('div');
+        row.setAttribute('class', 'row');
+        row.setAttribute('id', id);
+        table.appendChild(row);
+
+        var name = document.createElement('div');
+        name.setAttribute('class', 'name');
+        name.textContent = uname;
+        row.appendChild(name);
+
+        var scoreChild = document.createElement('div');
+        scoreChild.setAttribute('class', 'score');
+        scoreChild.textContent = score;
+        row.appendChild(scoreChild);
+    }
+}
+
 setInterval(function() {
-    if (movement.dead) {
+    if (!isAlive) {
         if (movement.down) {
             socket.emit('respawn');
         }
@@ -74,10 +105,12 @@ setInterval(function() {
     socket.emit('movement', movement);
 }, 1000 / 60);
 
+// renders game state
 setInterval(function() {
-    // render
     context.clearRect(0, 0, 800, 600);
     context.font = '30px sans-serif';
+
+    // render food
     context.fillStyle = 'blue';
     for (var j=0; j<food.length; j++) {
         context.fillRect(food[j][0]*10,
@@ -89,31 +122,55 @@ setInterval(function() {
         if (id == socket.id) {
             context.fillStyle = 'black';
             context.fillText('Score: '+player.blocks.length, 10, 30);
+            context.fillStyle = 'yellow';
+            context.fillRect(player.blocks[0][0]*10,
+                             player.blocks[0][1]*10, 10, 10);
             context.fillStyle = 'green';
-
+            isAlive = player.alive;
             if (!player.alive) {
-                context.fillStyle = 'black';
+                context.fillStyle = 'gray';
                 context.fillText('Game Over', 310, 300);
-                context.fillText('press down to continue', 210, 340);
-                context.fillStyle = 'gray';
-                movement.dead = true;
-            } else {
-                movement.dead = false;
+                context.fillText('Use WASD to control your snake.', 310, 340);
+                context.fillText('press down to continue', 310, 380);
             }
-
         } else {
-            context.fillStyle = 'red';
-            if (!player.alive) {
-                context.fillStyle = 'gray';
-            }
-
+            context.fillStyle = player.alive ?  'orange' : 'gray';
+            context.fillRect(player.blocks[0][0]*10,
+                             player.blocks[0][1]*10, 10, 10);
+            context.fillStyle = player.alive ? 'red' : 'grey';
         }
-        for (var i=0; i<player.blocks.length; i++) {
+        for (var i=1; i<player.blocks.length; i++) {
             context.fillRect(player.blocks[i][0]*10,
             player.blocks[i][1]*10, 10, 10);
         }
     }
-
-    context.fillStyle = 'black';
-    context.fillText('High Score: '+highScore, 300, 30);
 }, 10000 / 60);
+
+
+setInterval(function() {
+
+    let elements = [];
+    let table = document.getElementById('highScoreTable');
+    table.querySelectorAll('.row').forEach(el => elements.push(el));
+    table.innerHTML = '';
+
+    // sort table by player score
+    elements.sort((a, b) => b.querySelector('.score').textContent - a.querySelector('.score').textContent);
+    elements.forEach(function(e) {
+        if (e.id in players) {
+            table.appendChild(e);
+        }
+    });
+    let getUsernames = false;
+    for (id in players) {
+        if (id in usernames) {
+            updatePlayer(id, usernames[id], players[id].blocks.length);
+        } else {
+            getUsernames = true;
+            updatePlayer(id, 'id: '+id, players[id].blocks.length);
+        }
+    }
+    if (getUsernames) {
+        socket.emit('get_players');
+    }
+}, 1000 / 10);
